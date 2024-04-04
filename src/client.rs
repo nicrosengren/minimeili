@@ -103,15 +103,18 @@ impl Client {
     }
 
     /// Searches index T
-    pub async fn search<T>(&self, search: impl Into<Search>) -> Result<SearchResponse<T>>
+    pub async fn search<T>(
+        &self,
+        index_uid: impl AsRef<str>,
+        search: impl Into<Search>,
+    ) -> Result<SearchResponse<T>>
     where
-        T: HasIndex,
         T: serde::de::DeserializeOwned,
     {
         let search = search.into();
         self.req::<Json<SearchResponse<T>>>(
             Method::POST,
-            &format!("/indexes/{}/search", T::INDEX_UID),
+            &format!("/indexes/{}/search", index_uid.as_ref()),
             Json(&search),
         )
         .await

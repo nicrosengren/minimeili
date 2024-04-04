@@ -28,6 +28,6 @@ struct TestDocument {
 }
 
 impl minimeili::HasIndex for TestDocument {
-    const INDEX_UID: &'static str = "testingdocs";
+    const INDEX_UID: &'static str = "names";
     const PRIMARY_KEY: &'static str = "id";
 }

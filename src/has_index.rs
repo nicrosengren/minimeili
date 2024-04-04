@@ -30,7 +30,7 @@ where
     where
         Self: serde::de::DeserializeOwned,
     {
-        c.search(search).await
+        c.search(Self::INDEX_UID, search).await
     }
 
     async fn get_index(c: &Client) -> Result<Index> {
@@ -84,9 +84,15 @@ where
     }
 
     async fn ensure_index(c: &Client) -> Result<()> {
-        if let Err(Error::UnexpectedNok(404)) = Self::get_index(c).await {
-            let task = Self::create_index(c).await?;
-            task.wait_until_stopped(c).await?;
+        match Self::get_index(c).await {
+            Err(Error::UnexpectedNok(404)) => {
+                let task = Self::create_index(c).await?;
+                task.wait_until_stopped(c).await?;
+            }
+
+            Err(err) => return Err(err),
+
+            Ok(_) => (),
         }
 
         Self::ensure_index_settings(c).await?;

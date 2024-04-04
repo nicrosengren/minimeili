@@ -1,26 +1,26 @@
 use minimeili::prelude::*;
 
-#[derive(Debug, serde::Deserialize)]
-#[allow(dead_code)]
-struct TestDocument {
-    id: u64,
-    name: String,
-}
-
-impl minimeili::HasIndex for TestDocument {
-    const INDEX_UID: &'static str = "testingdocs";
-    const PRIMARY_KEY: &'static str = "id";
+#[derive(serde::Deserialize)]
+struct Anything {
+    #[serde(flatten)]
+    values: serde_json::Value,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = minimeili::Client::from_env();
 
-    let qry = std::env::args()
+    let index_uid = std::env::args()
         .nth(1)
-        .expect("provide search query through first argument");
+        .expect("first argument should be index uid");
 
-    println!("{:#?}", TestDocument::search(&client, qry).await);
+    let qry = std::env::args()
+        .nth(2)
+        .expect("second argument should be search query");
+
+    let res = client.search::<serde_json::Value>(index_uid, qry).await?;
+
+    println!("{res:#?}");
 
     Ok(())
 }
