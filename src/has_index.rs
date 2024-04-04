@@ -3,7 +3,7 @@ use crate::{
     index::Index,
     search::{Search, SearchResponse},
     task::TaskRef,
-    Error, Result,
+    Error, IndexSettings, Result,
 };
 
 #[allow(async_fn_in_trait)]
@@ -13,6 +13,11 @@ where
 {
     const INDEX_UID: &'static str;
     const PRIMARY_KEY: &'static str;
+
+    const SEARCHABLE_ATTRIBUTES: &'static [&'static str] = &["*"];
+
+    const FILTERABLE_ATTRIBUTES: &'static [&'static str] = &[];
+    const SORTABLE_ATTRIBUTES: &'static [&'static str] = &[];
 
     async fn add_to_index(&self, c: &Client) -> Result<TaskRef>
     where
@@ -32,6 +37,10 @@ where
         c.get_index(Self::INDEX_UID).await
     }
 
+    async fn get_index_settings(c: &Client) -> Result<IndexSettings> {
+        c.get_index_settings(Self::INDEX_UID).await
+    }
+
     async fn create_index(c: &Client) -> Result<TaskRef> {
         c.create_index(Self::INDEX_UID, Self::PRIMARY_KEY).await
     }
@@ -40,12 +49,49 @@ where
         c.delete_index(Self::INDEX_UID).await
     }
 
-    async fn ensure_index(c: &Client) -> Result<Option<TaskRef>> {
+    async fn ensure_index_settings(c: &Client) -> Result<()> {
+        let mut settings = Self::get_index_settings(c).await?;
+
+        let mut update_needed = false;
+
+        for (local, remote) in [
+            (
+                Self::FILTERABLE_ATTRIBUTES,
+                &mut settings.filterable_attributes,
+            ),
+            (Self::SORTABLE_ATTRIBUTES, &mut settings.sortable_attributes),
+            (
+                Self::SEARCHABLE_ATTRIBUTES,
+                &mut settings.searchable_attributes,
+            ),
+        ] {
+            let mut l = local.iter().map(|s| String::from(*s)).collect::<Vec<_>>();
+            l.sort();
+            remote.sort();
+
+            if &l != remote {
+                update_needed = true;
+                *remote = l;
+            }
+        }
+
+        if update_needed {
+            let task_ref = c.update_index_settings(Self::INDEX_UID, &settings).await?;
+            task_ref.wait_until_stopped(c).await?;
+            return Ok(());
+        }
+        Ok(())
+    }
+
+    async fn ensure_index(c: &Client) -> Result<()> {
         if let Err(Error::UnexpectedNok(404)) = Self::get_index(c).await {
             let task = Self::create_index(c).await?;
-            return Ok(Some(task));
+            task.wait_until_stopped(c).await?;
         }
-        Ok(None)
+
+        Self::ensure_index_settings(c).await?;
+
+        Ok(())
     }
 }
 

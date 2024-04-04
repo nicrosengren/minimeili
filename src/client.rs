@@ -5,7 +5,7 @@ use crate::{
     index::Index,
     search::{Search, SearchResponse},
     task::{AsTaskUid, Task, TaskRef},
-    Error, HasIndex, Result,
+    Error, HasIndex, IndexSettings, Result,
 };
 
 #[derive(Clone)]
@@ -30,7 +30,10 @@ where
     T: serde::Serialize,
 {
     fn set_to(self, rb: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-        rb.json(self.0)
+        // Only serializing Structs from this crate. Except for now.
+        let bs = serde_json::to_vec(self.0).expect("failed to serialize payload");
+
+        rb.body(bs).header("content-type", "application/json")
     }
 }
 
@@ -143,8 +146,30 @@ impl Client {
     pub async fn get_index(&self, index_uid: impl AsRef<str>) -> Result<Index> {
         self.req::<Json<Index>>(
             Method::GET,
-            &format!("/indexes/{}/documents", index_uid.as_ref()),
+            &format!("/indexes/{}", index_uid.as_ref()),
             Empty,
+        )
+        .await
+    }
+
+    pub async fn get_index_settings(&self, index_uid: impl AsRef<str>) -> Result<IndexSettings> {
+        self.req::<Json<_>>(
+            Method::GET,
+            &format!("/indexes/{}/settings", index_uid.as_ref()),
+            Empty,
+        )
+        .await
+    }
+
+    pub async fn update_index_settings(
+        &self,
+        index_uid: impl AsRef<str>,
+        settings: &IndexSettings,
+    ) -> Result<TaskRef> {
+        self.req::<Json<TaskRef>>(
+            Method::PATCH,
+            &format!("/indexes/{}/settings", index_uid.as_ref()),
+            Json(settings),
         )
         .await
     }

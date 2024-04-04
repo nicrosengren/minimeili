@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Index {
@@ -19,7 +21,7 @@ pub struct IndexSettings {
     pub non_separator_tokens: Vec<String>,
     pub separator_tokens: Vec<String>,
     pub dictionary: Vec<String>,
-    pub synonyms: Vec<String>,
+    pub synonyms: HashMap<String, String>,
     pub distinct_attribute: serde_json::Value,
     pub typo_tolerance: TypoTolerance,
     pub faceting: Faceting,
