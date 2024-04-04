@@ -2,7 +2,13 @@
 name = "minimeili"
 version = "0.1.0"
 edition = "2021"
-publish = false
+repository = "https://github.com/nicrosengren/minimeili"
+license = "MIT"
+readme = "README.md"
+
+description = """
+Small subset of the Meilisearch API exposed in a simpler way
+"""
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
