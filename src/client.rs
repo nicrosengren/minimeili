@@ -1,4 +1,4 @@
-use reqwest::{header, Method, Url};
+use reqwest::{header, Method};
 use std::{env, sync::Arc};
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
 #[derive(Clone)]
 pub struct Client {
     c: reqwest::Client,
-    base_url: Arc<Url>,
+    base_url: Arc<String>,
 }
 
 trait Payload {
@@ -72,8 +72,11 @@ impl FromResponse for Empty {
 
 impl Client {
     fn build_request(&self, m: Method, path: &str) -> reqwest::RequestBuilder {
-        let mut url = Url::clone(&self.base_url);
-        url.set_path(path);
+        let url = format!(
+            "{}/{}",
+            self.base_url.as_str().trim_end_matches('/'),
+            path.trim_start_matches('/')
+        );
         self.c.request(m, url)
     }
 
@@ -203,12 +206,6 @@ impl Client {
     }
 
     pub fn new(token: &str, url_s: &str) -> Self {
-        let url: reqwest::Url = url_s.parse().expect("invalid URL");
-
-        if url.cannot_be_a_base() {
-            panic!("{url} is not a valid base");
-        }
-
         let authorization_header = format!("Bearer {token}");
 
         let c = reqwest::Client::builder()
@@ -223,7 +220,7 @@ impl Client {
 
         Self {
             c,
-            base_url: Arc::new(url),
+            base_url: Arc::new(String::from(url_s)),
         }
     }
 
