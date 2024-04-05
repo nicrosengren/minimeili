@@ -173,15 +173,20 @@ impl Search {
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SearchResponseItem<T> {
+    #[serde(flatten)]
+    pub result: T,
+}
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SearchResponse<T> {
     /// Results of the query
-    pub hits: Vec<T>,
+    pub hits: Vec<SearchResponseItem<T>>,
 
-    /// Number of documents skipped
-    pub offset: u32,
+    pub offset: Option<u32>,
 
-    /// Number of documents to take
-    pub limit: u32,
+    pub limit: Option<u32>,
 
     /// Estimated total number of matches
     pub estimated_total_hits: Option<u32>,
