@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use crate::HasIndex;
+
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Search {
@@ -135,6 +137,37 @@ impl Search {
             show_ranking_score: None,
             attributes_to_search_on: vec![],
         }
+    }
+
+    pub fn hits_per_page(mut self, n: Option<u32>) -> Self {
+        self.hits_per_page = n;
+        self
+    }
+
+    pub fn page(mut self, p: Option<u32>) -> Self {
+        self.page = p;
+        self
+    }
+
+    pub fn sort_by(mut self, s: impl Into<String>) -> Self {
+        self.sort.push(s.into());
+        self
+    }
+
+    pub fn filter<S>(mut self, f: Option<S>) -> Self
+    where
+        String: From<S>,
+    {
+        self.filter = f.map(String::from);
+        self
+    }
+
+    pub async fn search<T>(self, client: &crate::Client) -> crate::Result<SearchResponse<T>>
+    where
+        T: HasIndex,
+        T: serde::de::DeserializeOwned,
+    {
+        T::search(client, self).await
     }
 }
 
