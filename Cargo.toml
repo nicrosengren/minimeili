@@ -1,6 +1,6 @@
 [package]
 name = "minimeili"
-version = "0.2.3"
+version = "0.3.0"
 edition = "2021"
 repository = "https://github.com/nicrosengren/minimeili"
 documentation = "https://docs.rs/minimeili"
