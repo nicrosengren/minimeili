@@ -49,6 +49,17 @@ where
         c.delete_index(Self::INDEX_UID).await
     }
 
+    async fn delete_documents(
+        c: &Client,
+        document_uids: &[impl serde::Serialize],
+    ) -> Result<TaskRef> {
+        c.delete_documents(Self::INDEX_UID, document_uids).await
+    }
+
+    async fn delete_all_documents(c: &Client) -> Result<TaskRef> {
+        c.delete_all_documents(Self::INDEX_UID).await
+    }
+
     async fn ensure_index_settings(c: &Client) -> Result<()> {
         let mut settings = Self::get_index_settings(c).await?;
 
@@ -85,7 +96,7 @@ where
 
     async fn ensure_index(c: &Client) -> Result<()> {
         match Self::get_index(c).await {
-            Err(Error::UnexpectedNok(404)) => {
+            Err(Error::UnexpectedNok { code: 404, .. }) => {
                 let task = Self::create_index(c).await?;
                 task.wait_until_stopped(c).await?;
             }

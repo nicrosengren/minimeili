@@ -1,11 +1,3 @@
-use minimeili::prelude::*;
-
-#[derive(serde::Deserialize)]
-struct Anything {
-    #[serde(flatten)]
-    values: serde_json::Value,
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = minimeili::Client::from_env();

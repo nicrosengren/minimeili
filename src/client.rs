@@ -23,15 +23,20 @@ trait FromResponse {
     async fn from_response(res: reqwest::Response) -> Result<Self::Output>;
 }
 
-struct Json<'a, T>(&'a T);
+struct Json<'a, T>(&'a T)
+where
+    T: ?Sized;
 
 impl<'a, T> Payload for Json<'a, T>
 where
     T: serde::Serialize,
+    T: ?Sized,
 {
     fn set_to(self, rb: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         // Only serializing Structs from this crate. Except for now.
         let bs = serde_json::to_vec(self.0).expect("failed to serialize payload");
+
+        println!("Setting body:\n{}", String::from_utf8_lossy(&bs));
 
         rb.body(bs).header("content-type", "application/json")
     }
@@ -92,7 +97,13 @@ impl Client {
         if http_res.status().is_success() {
             R::from_response(http_res).await
         } else {
-            Err(Error::UnexpectedNok(http_res.status().as_u16()))
+            let code = http_res.status().as_u16();
+            let body = http_res.text().await?;
+
+            Err(Error::UnexpectedNok {
+                code,
+                body: if body.is_empty() { None } else { Some(body) },
+            })
         }
     }
 
@@ -145,6 +156,45 @@ impl Client {
             Method::POST,
             &format!("/indexes/{}/documents", T::INDEX_UID),
             Json(doc),
+        )
+        .await
+    }
+
+    pub async fn delete_all_documents(&self, index_uid: impl AsRef<str>) -> Result<TaskRef> {
+        self.req::<Json<TaskRef>>(
+            Method::DELETE,
+            &format!("/indexes/{}/documents", index_uid.as_ref()),
+            Empty,
+        )
+        .await
+    }
+
+    pub async fn delete_document(
+        &self,
+        index_uid: impl AsRef<str>,
+        document_uid: impl AsRef<str>,
+    ) -> Result<TaskRef> {
+        self.req::<Json<TaskRef>>(
+            Method::DELETE,
+            &format!(
+                "/indexes/{}/documents/{}",
+                index_uid.as_ref(),
+                document_uid.as_ref()
+            ),
+            Empty,
+        )
+        .await
+    }
+
+    pub async fn delete_documents(
+        &self,
+        index_uid: impl AsRef<str>,
+        document_uids: &[impl serde::Serialize],
+    ) -> Result<TaskRef> {
+        self.req::<Json<TaskRef>>(
+            Method::POST,
+            &format!("/indexes/{}/documents/delete-batch", index_uid.as_ref(),),
+            Json(document_uids),
         )
         .await
     }

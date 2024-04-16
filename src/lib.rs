@@ -21,8 +21,8 @@ pub enum Error {
     #[error("transport: {0}")]
     Transport(#[from] reqwest::Error),
 
-    #[error("nok response from meili: {0:03}")]
-    UnexpectedNok(u16),
+    #[error("nok response from meili: {code:03}. Body:{body:?}")]
+    UnexpectedNok { code: u16, body: Option<String> },
 
     #[error("deserializing response: {err}. Body: \n{body}")]
     Deserialize {

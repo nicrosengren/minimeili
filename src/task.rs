@@ -120,7 +120,7 @@ pub enum TaskKind {
     },
     #[serde(rename_all = "camelCase")]
     DocumentDeletion {
-        provided_ids: u64,
+        provided_ids: Option<u64>,
         original_filter: Option<String>,
         deleted_documents: u64,
     },
