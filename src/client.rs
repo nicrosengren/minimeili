@@ -35,9 +35,6 @@ where
     fn set_to(self, rb: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
         // Only serializing Structs from this crate. Except for now.
         let bs = serde_json::to_vec(self.0).expect("failed to serialize payload");
-
-        println!("Setting body:\n{}", String::from_utf8_lossy(&bs));
-
         rb.body(bs).header("content-type", "application/json")
     }
 }
