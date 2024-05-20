@@ -8,14 +8,15 @@ license = "MIT"
 readme = "README.md"
 
 description = """
-Small subset of the Meilisearch API exposed in a simpler way
+Small subset of the Meilisearch API implemented a little differently
 """
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = [ "tokio" ]
-tokio = ["dep:tokio"]
+default = [ "hooks" ]
+hooks = [ "tokio" ]
+tokio = [ "dep:tokio" ]
 
 [dependencies]
 reqwest = { version = "0.12.2", default-features = false, features = [ "rustls-tls" ] }
@@ -24,6 +25,7 @@ serde_json = "1.0.115"
 thiserror = "1.0.58"
 
 tokio = { optional = true, version = "1.37.0", features = ["time"] }
+tracing = "0.1.40"
 
 
 [dev-dependencies]

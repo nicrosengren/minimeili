@@ -4,10 +4,17 @@ mod index;
 mod search;
 mod task;
 
+#[cfg(feature = "hooks")]
+mod task_manager;
+
+#[cfg(feature = "hooks")]
+pub use task_manager::TaskManager;
+
 pub use client::Client;
 pub use has_index::*;
 pub use index::*;
 pub use search::*;
+
 pub use task::*;
 
 pub mod prelude {
@@ -29,6 +36,9 @@ pub enum Error {
         err: serde_json::Error,
         body: String,
     },
+
+    #[error("timeout waiting for hook")]
+    HookTimeout,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

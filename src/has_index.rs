@@ -87,17 +87,22 @@ where
         }
 
         if update_needed {
+            #[allow(unused_variables)]
             let task_ref = c.update_index_settings(Self::INDEX_UID, &settings).await?;
+            #[cfg(any(feature = "tokio", feature = "hooks"))]
             task_ref.wait_until_stopped(c).await?;
-            return Ok(());
         }
+
         Ok(())
     }
 
     async fn ensure_index(c: &Client) -> Result<()> {
         match Self::get_index(c).await {
             Err(Error::UnexpectedNok { code: 404, .. }) => {
+                #[allow(unused_variables)]
                 let task = Self::create_index(c).await?;
+
+                #[cfg(any(feature = "tokio", feature = "hooks"))]
                 task.wait_until_stopped(c).await?;
             }
 

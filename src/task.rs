@@ -1,7 +1,5 @@
 use crate::{DateTime, IndexSettings};
 
-const DEFAULT_TASK_WAIT_DUR: std::time::Duration = std::time::Duration::from_millis(500);
-
 pub trait AsTaskUid {
     fn as_task_uid(&self) -> u64;
 }
@@ -41,7 +39,7 @@ pub struct TaskRef {
 impl TaskRef {
     #[cfg(feature = "tokio")]
     pub async fn wait_until_stopped(&self, c: &crate::Client) -> crate::Result<Task> {
-        c.wait_for_task(self, DEFAULT_TASK_WAIT_DUR).await
+        c.wait_for_task(self).await
     }
 }
 
@@ -63,8 +61,8 @@ pub struct Task {
 
 impl Task {
     #[cfg(feature = "tokio")]
-    pub async fn wait_until_stopped(&self, c: &crate::Client) -> crate::Result<Task> {
-        c.wait_for_task(self, DEFAULT_TASK_WAIT_DUR).await
+    pub async fn wait_until_stopped(&self, c: &crate::Client) -> crate::Result<Task>{
+        c.wait_for_task(self).await
     }
 }
 

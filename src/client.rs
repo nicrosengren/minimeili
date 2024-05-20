@@ -8,10 +8,16 @@ use crate::{
     Error, HasIndex, IndexSettings, Result,
 };
 
+#[cfg(feature = "hooks")]
+use crate::TaskManager;
+
 #[derive(Clone)]
 pub struct Client {
     c: reqwest::Client,
     base_url: Arc<String>,
+
+    #[cfg(feature = "hooks")]
+    task_manager: TaskManager,
 }
 
 trait Payload {
@@ -80,6 +86,17 @@ impl Client {
             path.trim_start_matches('/')
         );
         self.c.request(m, url)
+    }
+
+    #[cfg(all(feature = "tokio", feature = "hooks"))]
+    pub async fn handle_webhook_raw(
+        &self,
+        hook: serde_json::Value,
+    ) -> std::result::Result<(), serde_json::Error> {
+        let task = serde_json::from_value(hook)?;
+        self.task_manager.handle_task(task).await;
+
+        Ok(())
     }
 
     async fn req<R>(&self, method: Method, path: &str, payload: impl Payload) -> Result<R::Output>
@@ -268,19 +285,32 @@ impl Client {
         Self {
             c,
             base_url: Arc::new(String::from(url_s)),
+
+            #[cfg(all(feature = "tokio", feature = "hooks"))]
+            task_manager: TaskManager::default(),
         }
     }
 
-    #[cfg(feature = "tokio")]
+    #[cfg(all(feature = "tokio", feature = "hooks"))]
+    pub async fn wait_for_task(&self, task_uid: impl AsTaskUid) -> Result<Task> {
+        let uid = task_uid.as_task_uid();
+        match self.task_manager.wait_for_task(uid).await {
+            Some(task) => Ok(task),
+            None => Err(Error::HookTimeout),
+        }
+    }
+
+    #[cfg(all(feature = "tokio", not(feature = "hooks")))]
     pub async fn wait_for_task(
         &self,
         task_uid: impl AsTaskUid,
-        interval: std::time::Duration,
     ) -> Result<Task> {
+        use std::time;
+
         let uid = task_uid.as_task_uid();
 
         loop {
-            tokio::time::sleep(interval).await;
+            tokio::time::sleep(time::Duration::from_millis(500)).await;
             let task = self.get_task(uid).await?;
             if task.status.has_stopped() {
                 return Ok(task);
