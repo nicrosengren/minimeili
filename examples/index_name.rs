@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let id = name.bytes().map(|b| (b as u64)).sum::<u64>();
 
-    let task_ref = TestDocument { id, name }.add_to_index(&client).await?;
+    let task_ref = TestDocument { id, name }.replace_in_index(&client).await?;
     println!("adding document {task_ref:?}",);
 
     println!("wating for task");

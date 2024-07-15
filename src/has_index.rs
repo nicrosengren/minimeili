@@ -19,11 +19,18 @@ where
     const FILTERABLE_ATTRIBUTES: &'static [&'static str] = &[];
     const SORTABLE_ATTRIBUTES: &'static [&'static str] = &[];
 
-    async fn add_to_index(&self, c: &Client) -> Result<TaskRef>
+    async fn replace_in_index(&self, c: &Client) -> Result<TaskRef>
     where
         Self: serde::Serialize,
     {
-        c.index_document(self).await
+        c.add_or_replace_document(self).await
+    }
+
+    async fn update_in_index(&self, c: &Client) -> Result<TaskRef>
+    where
+        Self: serde::Serialize,
+    {
+        c.add_or_update_document(self).await
     }
 
     async fn search(c: &Client, search: impl Into<Search>) -> Result<SearchResponse<Self>>
@@ -119,7 +126,10 @@ where
 
 pub trait HasIndexExt {
     #[allow(async_fn_in_trait)]
-    async fn add_to_index(&self, c: &Client) -> Result<TaskRef>;
+    async fn replace_in_index(&self, c: &Client) -> Result<TaskRef>;
+
+    #[allow(async_fn_in_trait)]
+    async fn update_in_index(&self, c: &Client) -> Result<TaskRef>;
 }
 
 impl<'a, T> HasIndexExt for &'a [T]
@@ -127,7 +137,11 @@ where
     T: HasIndex,
     T: serde::Serialize,
 {
-    async fn add_to_index(&self, c: &Client) -> Result<TaskRef> {
-        c.index_documents(self).await
+    async fn replace_in_index(&self, c: &Client) -> Result<TaskRef> {
+        c.add_or_replace_documents(self).await
+    }
+
+    async fn update_in_index(&self, c: &Client) -> Result<TaskRef> {
+        c.add_or_update_documents(self).await
     }
 }

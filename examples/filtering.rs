@@ -48,13 +48,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     User::ensure_index(&client).await?;
 
     User::new("Adam", [23, 24, 25])
-        .add_to_index(&client)
+        .replace_in_index(&client)
         .await?
         .wait_until_stopped(&client)
         .await?;
 
     User::new("Bertil", [36, 37, 38])
-        .add_to_index(&client)
+        .replace_in_index(&client)
         .await?
         .wait_until_stopped(&client)
         .await?;

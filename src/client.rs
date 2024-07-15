@@ -148,7 +148,7 @@ impl Client {
         .await
     }
 
-    pub async fn index_documents<T>(&self, docs: &[T]) -> Result<TaskRef>
+    pub async fn add_or_replace_documents<T>(&self, docs: &[T]) -> Result<TaskRef>
     where
         T: HasIndex,
         T: serde::Serialize,
@@ -161,13 +161,39 @@ impl Client {
         .await
     }
 
-    pub async fn index_document<T>(&self, doc: &T) -> Result<TaskRef>
+    pub async fn add_or_replace_document<T>(&self, doc: &T) -> Result<TaskRef>
     where
         T: HasIndex,
         T: serde::Serialize,
     {
         self.req::<Json<TaskRef>>(
             Method::POST,
+            &format!("/indexes/{}/documents", T::INDEX_UID),
+            Json(doc),
+        )
+        .await
+    }
+
+    pub async fn add_or_update_documents<T>(&self, docs: &[T]) -> Result<TaskRef>
+    where
+        T: HasIndex,
+        T: serde::Serialize,
+    {
+        self.req::<Json<TaskRef>>(
+            Method::PUT,
+            &format!("/indexes/{}/documents", T::INDEX_UID),
+            Json(&docs),
+        )
+        .await
+    }
+
+    pub async fn add_or_update_document<T>(&self, doc: &T) -> Result<TaskRef>
+    where
+        T: HasIndex,
+        T: serde::Serialize,
+    {
+        self.req::<Json<TaskRef>>(
+            Method::PUT,
             &format!("/indexes/{}/documents", T::INDEX_UID),
             Json(doc),
         )
@@ -301,10 +327,7 @@ impl Client {
     }
 
     #[cfg(all(feature = "tokio", not(feature = "hooks")))]
-    pub async fn wait_for_task(
-        &self,
-        task_uid: impl AsTaskUid,
-    ) -> Result<Task> {
+    pub async fn wait_for_task(&self, task_uid: impl AsTaskUid) -> Result<Task> {
         use std::time;
 
         let uid = task_uid.as_task_uid();

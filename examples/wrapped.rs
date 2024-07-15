@@ -50,7 +50,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Outer::ensure_index(&client).await?;
 
-    Outer::new("Adam", "Bertil").add_to_index(&client).await?;
+    Outer::new("Adam", "Bertil")
+        .replace_in_index(&client)
+        .await?;
 
     task_ref.wait_until_stopped(&client).await?;
 
