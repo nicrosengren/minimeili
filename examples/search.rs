@@ -1,3 +1,5 @@
+use minimeili::Search;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = minimeili::Client::from_env();
@@ -10,9 +12,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nth(2)
         .expect("second argument should be search query");
 
-    let res = client.search::<serde_json::Value>(index_uid, qry).await?;
+    let filter = std::env::args().nth(3);
+
+    let search = Search::new(&qry).filter(filter.as_ref());
+
+    let res = client
+        .search::<serde_json::Value>(index_uid, search)
+        .await?;
 
     println!("{res:#?}");
+    println!("query: `{qry}`");
+    println!("filter: `{filter:?}`");
 
     Ok(())
 }

@@ -57,7 +57,6 @@ impl TaskManager {
                     else {
                         unreachable!("cannot occur since we check in the match clause");
                     };
-                    println!("completing for {} waiters", waiters.len());
 
                     for sender in waiters {
                         if sender.send(task.clone()).is_err() {
