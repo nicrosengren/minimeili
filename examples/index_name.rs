@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .nth(1)
         .expect("provide a name via first argument");
 
-    let id = name.bytes().map(|b| (b as u64)).sum::<u64>();
+    let id = name.bytes().map(|b| b as u64).sum::<u64>();
 
     let task_ref = TestDocument { id, name }.replace_in_index(&client).await?;
     println!("adding document {task_ref:?}",);
