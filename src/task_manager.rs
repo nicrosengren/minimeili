@@ -15,6 +15,7 @@ pub struct TaskManager {
     task_tickets: Arc<Mutex<HashMap<u64, TaskTicket>>>,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum TaskTicket {
     Pending(Vec<oneshot::Sender<Task>>),
     Completed(Task),

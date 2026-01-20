@@ -61,7 +61,7 @@ pub struct Task {
 
 impl Task {
     #[cfg(feature = "tokio")]
-    pub async fn wait_until_stopped(&self, c: &crate::Client) -> crate::Result<Task>{
+    pub async fn wait_until_stopped(&self, c: &crate::Client) -> crate::Result<Task> {
         c.wait_for_task(self).await
     }
 }
@@ -123,7 +123,7 @@ pub enum TaskKind {
         deleted_documents: u64,
     },
 
-    SettingsUpdate(IndexSettings),
+    SettingsUpdate(Box<IndexSettings>),
 
     #[serde(rename_all = "camelCase")]
     DumpCreation {

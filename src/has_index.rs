@@ -132,7 +132,7 @@ pub trait HasIndexExt {
     async fn update_in_index(&self, c: &Client) -> Result<TaskRef>;
 }
 
-impl<'a, T> HasIndexExt for &'a [T]
+impl<T> HasIndexExt for &[T]
 where
     T: HasIndex,
     T: serde::Serialize,
