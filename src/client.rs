@@ -320,10 +320,11 @@ impl Client {
     #[cfg(all(feature = "tokio", feature = "hooks"))]
     pub async fn wait_for_task(&self, task_uid: impl AsTaskUid) -> Result<Task> {
         let uid = task_uid.as_task_uid();
-        match self.task_manager.wait_for_task(uid).await {
-            Some(task) => Ok(task),
-            None => Err(Error::HookTimeout),
-        }
+        let sub = self.task_manager.subscribe_for_task(uid).await;
+
+        Ok(sub
+            .wait_with_timeout(tokio::time::Duration::from_secs(3))
+            .await?)
     }
 
     #[cfg(all(feature = "tokio", not(feature = "hooks")))]

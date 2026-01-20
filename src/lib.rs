@@ -17,6 +17,8 @@ pub use search::*;
 
 pub use task::*;
 
+use crate::task_manager::TaskPromiseError;
+
 pub mod prelude {
     pub use super::{HasIndex, HasIndexExt};
 }
@@ -37,8 +39,8 @@ pub enum Error {
         body: String,
     },
 
-    #[error("timeout waiting for hook")]
-    HookTimeout,
+    #[error("waiting for task hook: {0}")]
+    TaskPromise(#[from] TaskPromiseError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
