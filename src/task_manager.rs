@@ -68,12 +68,6 @@ impl TaskPromise {
         self,
         dur: tokio::time::Duration,
     ) -> Result<Task, TaskPromiseError> {
-        //let res = self
-        //    .receiver
-        //    .wait_for(|task_opt| task_opt.is_some())
-        //    .await
-        //    .map_err(|_| TaskPromiseError::ManagerClosed)?;
-
         match tokio::time::timeout(dur, self.wait()).await {
             Ok(Ok(task)) => Ok(task),
             Ok(Err(err)) => Err(err),

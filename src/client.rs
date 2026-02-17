@@ -1,5 +1,6 @@
 use reqwest::{header, Method};
 use std::{env, sync::Arc};
+use tracing::{info, warn};
 
 use crate::{
     index::Index,
@@ -103,10 +104,18 @@ impl Client {
     where
         R: FromResponse,
     {
-        let http_res = payload
+        let http_res = match payload
             .set_to(self.build_request(method, path))
             .send()
-            .await?;
+            .await
+        {
+            Ok(res) => res,
+
+            Err(err) => {
+                warn!("meili: {err:?}");
+                return Err(err.into());
+            }
+        };
 
         if http_res.status().is_success() {
             R::from_response(http_res).await
@@ -295,18 +304,26 @@ impl Client {
         .await
     }
 
-    pub fn new(token: &str, url_s: &str) -> Self {
+    pub fn new(token: &str, url_s: &str, root_cert: Option<reqwest::Certificate>) -> Self {
         let authorization_header = format!("Bearer {token}");
 
-        let c = reqwest::Client::builder()
+        let mut builder = reqwest::Client::builder()
             .default_headers(header::HeaderMap::from_iter([(
                 header::AUTHORIZATION,
                 header::HeaderValue::from_str(&authorization_header)
                     .expect("token contained invalid values"),
             )]))
-            .use_rustls_tls()
-            .build()
-            .expect("building client");
+            .use_rustls_tls();
+
+        if let Some(cert) = root_cert {
+            info!("adding root certificate");
+
+            builder = builder.add_root_certificate(cert);
+        } else {
+            info!("no root certificate added");
+        }
+
+        let c = builder.build().expect("building client");
 
         Self {
             c,
@@ -346,11 +363,18 @@ impl Client {
     ///
     /// * MEILI_TOKEN
     /// * MEILI_URL
+    /// * MEILI_ROOT_CERT (optional)
     // @TODO move this into a separate function taking params and returning a Result
     pub fn from_env() -> Self {
         let token = env::var("MEILI_TOKEN").expect("environment varaible MEILI_TOKEN");
         let url = env::var("MEILI_URL").expect("environment varaible MEILI_TOKEN");
 
-        Self::new(&token, &url)
+        let cert = env::var("MEILI_ROOT_CERT")
+            .ok()
+            .map(|cert| reqwest::Certificate::from_pem(cert.as_bytes()))
+            .transpose()
+            .expect("invalid certificate in `MEILI_ROOT_CERT`");
+
+        Self::new(&token, &url, cert)
     }
 }
